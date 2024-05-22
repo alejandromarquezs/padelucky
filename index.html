@@ -5,11 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Padelucky - Máquina de la Suerte</title>
     <style>
-        /* Tus estilos */
-        .modal { display: none; }
-        .modal.show { display: flex; }
-        .close { position: absolute; top: 10px; right: 10px; cursor: pointer; }
-        .selected { background-color: yellow; }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .machine, .verifier {
+            margin: 20px 0;
+        }
+        .ticket-table {
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+        }
+        .selected {
+            background-color: yellow;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            position: relative;
+        }
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
@@ -95,12 +161,13 @@
             projectId: "padelucky-e80e6",
             storageBucket: "padelucky-e80e6.appspot.com",
             messagingSenderId: "87499387761",
-            appId: "1:87499387761:web:e446eb19d6505e924afcd0"
+            appId: "1:87499387761:web:e446eb19d6505e924afcd0",
             measurementId: "G-HZRERWE8TS"
         };
+
         // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const firestore = firebase.firestore(app);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         let selectedNumbers = [];
         const totalTickets = 149;
@@ -178,11 +245,10 @@
                 span.textContent = String(num).padStart(3, '0');
                 numberListDiv.appendChild(span);
             });
-
-            const apartButton = document.getElementById('apartButton');
             const totalCostDiv = document.getElementById('totalCost');
+            const apartButton = document.getElementById('apartButton');
             if (selectedNumbers.length > 0) {
-                apartButton.style.display = 'inline-block';
+                apartButton.style.display = 'block';
                 const totalCost = selectedNumbers.length * ticketPrice;
                 totalCostDiv.textContent = `Costo Total: $${totalCost} pesos`;
             } else {
