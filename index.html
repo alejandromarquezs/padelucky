@@ -242,7 +242,7 @@
             numberListDiv.innerHTML = '';
             selectedNumbers.forEach(num => {
                 const span = document.createElement('span');
-                span.textContent = String(num).padStart(3, '0');
+                span.textContent = String(num).padStart(3, '0') + ' ';
                 numberListDiv.appendChild(span);
             });
             const totalCostDiv = document.getElementById('totalCost');
