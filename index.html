@@ -39,6 +39,7 @@
                     <input type="tel" id="phone" required>
                     <label for="state">Estado:</label>
                     <select id="state" required>
+                        <option value="" disabled selected>Selecciona tu estado</option>
                         <option value="Aguascalientes">Aguascalientes</option>
                         <option value="Baja California">Baja California</option>
                         <option value="Baja California Sur">Baja California Sur</option>
@@ -77,7 +78,18 @@
             </div>
         </main>
     </div>
-    <script src="firebase.js"></script>
+    <div id="crmAccess" class="hidden">
+        <h2>Acceso CRM</h2>
+        <input type="password" id="crmPassword" placeholder="Contraseña">
+        <button id="crmLoginButton">Acceder</button>
+        <div id="crmPanel" class="hidden">
+            <button class="closeButton">x</button>
+            <h2>Panel CRM</h2>
+            <div id="crmContent">
+                <!-- Contenido del CRM -->
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
