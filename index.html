@@ -3,374 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Padelucky - Máquina de la Suerte</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            text-align: center;
-        }
-        .button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            margin: 10px 0;
-            border: none;
-            cursor: pointer;
-        }
-        .button:hover {
-            background-color: #45a049;
-        }
-        .machine, .verifier {
-            margin: 20px 0;
-        }
-        .ticket-table {
-            margin: 20px 0;
-        }
-        table {
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-            border-collapse: collapse;
-        }
-        table, th, td {
-            border: 1px solid black;
-        }
-        th, td {
-            padding: 8px;
-            text-align: center;
-        }
-        .selected {
-            background-color: yellow;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-        }
-        .modal.show {
-            display: flex;
-        }
-        .form-container {
-            background: white;
-            padding: 20px;
-            border-radius: 5px;
-            position: relative;
-        }
-        .close {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            cursor: pointer;
-            font-size: 18px;
-        }
-    </style>
+    <title>Padelucky - Edición #1</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <!-- Firebase Database -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js"></script>
+    <!-- Firebase Authentication -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>¡Bienvenidos a Padelucky!</h1>
-        <p>Edición #1 Adidas Metalbone HRD 2024 Ale Galán, participa con nuestra máquina de la suerte - Sorteo 1ro de julio</p>
-        <div class="machine">
-            <div class="number-input">
-                <label for="numTickets">¿Cuántos números quieres?</label>
-                <input type="number" id="numTickets" min="1" max="149" value="1">
+        <header>
+            <h1>Padelucky</h1>
+            <p>Edición #1 Adidas Metalbone HRD 2024 Ale Galán</p>
+            <p>Participa con nuestra máquina de la suerte - Sorteo 1ro de julio</p>
+        </header>
+        <main>
+            <div id="ticketMachine">
+                <button id="randomTicketButton">Máquina de la suerte</button>
+                <input type="number" id="ticketQuantity" placeholder="Número de boletos" min="1" max="149">
             </div>
-            <button class="button" onclick="generateNumbers()">La Máquina de la Suerte</button>
-            <div class="number-list" id="numberList"></div>
-            <div id="totalCost"></div>
-            <a id="apartButton" class="button" href="#" style="display: none;" onclick="showForm()">Apartar</a>
-        </div>
-        <div class="ticket-table">
-            <h2>Boletos Disponibles</h2>
-            <table id="availableTicketsTable">
-                <tbody id="availableTicketsBody"></tbody>
-            </table>
-        </div>
-        <div class="verifier">
-            <h2>Verificar Boleto</h2>
-            <input type="number" id="verifyTicket" min="1" max="149" placeholder="Número de boleto">
-            <button class="button" onclick="verifyTicket()">Verificar</button>
-            <p id="verifyResult"></p>
-        </div>
-        <button class="button" onclick="showAccess()">Acceso</button>
+            <div id="ticketTableContainer">
+                <table id="ticketTable">
+                    <!-- La tabla se llenará dinámicamente con JavaScript -->
+                </table>
+            </div>
+            <button id="reserveButton" disabled>Apartar</button>
+            <div id="customerForm" class="hidden">
+                <h2>Datos del Cliente</h2>
+                <form id="reservationForm">
+                    <label for="name">Nombre:</label>
+                    <input type="text" id="name" required>
+                    <label for="phone">Celular:</label>
+                    <input type="tel" id="phone" required>
+                    <label for="state">Estado:</label>
+                    <select id="state" required>
+                        <option value="Aguascalientes">Aguascalientes</option>
+                        <option value="Baja California">Baja California</option>
+                        <option value="Baja California Sur">Baja California Sur</option>
+                        <option value="Campeche">Campeche</option>
+                        <option value="Ciudad de México">Ciudad de México</option>
+                        <option value="Chiapas">Chiapas</option>
+                        <option value="Chihuahua">Chihuahua</option>
+                        <option value="Coahuila de Zaragoza">Coahuila de Zaragoza</option>
+                        <option value="Colima">Colima</option>
+                        <option value="Durango">Durango</option>
+                        <option value="Estado de México">Estado de México</option>
+                        <option value="Guanajuato">Guanajuato</option>
+                        <option value="Guerrero">Guerrero</option>
+                        <option value="Hidalgo">Hidalgo</option>
+                        <option value="Jalisco">Jalisco</option>
+                        <option value="Michoacán de Ocampo">Michoacán de Ocampo</option>
+                        <option value="Morelos">Morelos</option>
+                        <option value="Nayarit">Nayarit</option>
+                        <option value="Nuevo León">Nuevo León</option>
+                        <option value="Oaxaca">Oaxaca</option>
+                        <option value="Puebla">Puebla</option>
+                        <option value="Querétaro">Querétaro</option>
+                        <option value="Quintana Roo">Quintana Roo</option>
+                        <option value="San Luis Potosí">San Luis Potosí</option>
+                        <option value="Sinaloa">Sinaloa</option>
+                        <option value="Sonora">Sonora</option>
+                        <option value="Tabasco">Tabasco</option>
+                        <option value="Tamaulipas">Tamaulipas</option>
+                        <option value="Tlaxcala">Tlaxcala</option>
+                        <option value="Veracruz de Ignacio de la Llave">Veracruz de Ignacio de la Llave</option>
+                        <option value="Yucatán">Yucatán</option>
+                        <option value="Zacatecas">Zacatecas</option>
+                    </select>
+                    <button type="submit">Enviar</button>
+                </form>
+            </div>
+        </main>
     </div>
-
-    <div id="formModal" class="modal">
-        <div class="form-container">
-            <button class="close" onclick="closeModal('formModal')">x</button>
-            <h2>Apartar Boleto(s)</h2>
-            <input type="text" id="customerName" placeholder="Nombre Completo" required>
-            <input type="tel" id="customerPhone" placeholder="Número de Celular" required>
-            <input type="text" id="customerState" placeholder="Estado de Residencia" required>
-            <button onclick="submitForm()">Enviar</button>
-        </div>
-    </div>
-
-    <div id="accessModal" class="modal">
-        <div class="form-container">
-            <button class="close" onclick="closeModal('accessModal')">x</button>
-            <h2>Acceso</h2>
-            <input type="password" id="adminPassword" placeholder="Contraseña" required>
-            <button onclick="validateAccess()">Entrar</button>
-        </div>
-    </div>
-
-    <div id="adminModal" class="modal">
-        <div class="form-container">
-            <button class="close" onclick="closeModal('adminModal')">x</button>
-            <h2>Boletos Apartados</h2>
-            <input type="number" id="searchTicket" placeholder="Buscar Boleto">
-            <button onclick="searchBookedTicket()">Buscar</button>
-            <table id="bookedTicketsTable">
-                <thead>
-                    <tr>
-                        <th>Número de Boleto</th>
-                        <th>Nombre</th>
-                        <th>Teléfono</th>
-                        <th>Estado</th>
-                        <th>Reactivar</th>
-                    </tr>
-                </thead>
-                <tbody id="bookedTicketsBody"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <!-- Add Firebase products that you want to use -->
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
-
-    <script>
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCjpLyfV-wo9uM6K14N0q9DzsabKIIX4gA",
-            authDomain: "padelucky-e80e6.firebaseapp.com",
-            projectId: "padelucky-e80e6",
-            storageBucket: "padelucky-e80e6.appspot.com",
-            messagingSenderId: "87499387761",
-            appId: "1:87499387761:web:e446eb19d6505e924afcd0",
-            measurementId: "G-HZRERWE8TS"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        let selectedNumbers = [];
-        const totalTickets = 149;
-        const ticketPrice = 99;
-        let bookedTickets = {};
-
-        async function fetchBookedTickets() {
-            const snapshot = await db.collection('tickets').get();
-            bookedTickets = {};
-            snapshot.forEach(doc => {
-                bookedTickets[doc.id] = doc.data();
-            });
-            updateAvailableTicketsTable();
-        }
-
-        function generateNumbers() {
-            const numTickets = parseInt(document.getElementById('numTickets').value);
-            selectedNumbers = [];
-            for (let i = 0; i < numTickets; i++) {
-                let randomNum;
-                do {
-                    randomNum = Math.floor(Math.random() * totalTickets) + 1;
-                } while (selectedNumbers.includes(randomNum) || bookedTickets[randomNum]);
-                selectedNumbers.push(randomNum);
-            }
-            updateNumberList();
-        }
-
-        function updateAvailableTicketsTable() {
-            const availableTicketsBody = document.getElementById('availableTicketsBody');
-            availableTicketsBody.innerHTML = '';
-            let tr;
-            for (let i = 1; i <= totalTickets; i++) {
-                if ((i - 1) % 12 === 0) {
-                    tr = document.createElement('tr');
-                }
-                const td = document.createElement('td');
-                td.textContent = String(i).padStart(3, '0');
-                if (!bookedTickets[i]) {
-                    td.onclick = () => selectTicket(i, td);
-                } else {
-                    td.style.backgroundColor = "#ddd";
-                }
-                tr.appendChild(td);
-                if (i % 12 === 0) {
-                    availableTicketsBody.appendChild(tr);
-                }
-            }
-            if (totalTickets % 12 !== 0) {
-                availableTicketsBody.appendChild(tr);
-            }
-        }
-
-        function selectTicket(ticketNumber, td) {
-            if (!selectedNumbers.includes(ticketNumber)) {
-                selectedNumbers.push(ticketNumber);
-                td.classList.add('selected');
-                td.onclick = () => deselectTicket(ticketNumber, td);
-                updateNumberList();
-            }
-        }
-
-        function deselectTicket(ticketNumber, td) {
-            selectedNumbers = selectedNumbers.filter(num => num !== ticketNumber);
-            td.classList.remove('selected');
-            td.onclick = () => selectTicket(ticketNumber, td);
-            updateNumberList();
-        }
-
-        function updateNumberList() {
-            const numberListDiv = document.getElementById('numberList');
-            numberListDiv.innerHTML = '';
-            selectedNumbers.forEach(num => {
-                const span = document.createElement('span');
-                span.textContent = String(num).padStart(3, '0') + ' ';
-                numberListDiv.appendChild(span);
-            });
-            const totalCostDiv = document.getElementById('totalCost');
-            const apartButton = document.getElementById('apartButton');
-            if (selectedNumbers.length > 0) {
-                apartButton.style.display = 'block';
-                const totalCost = selectedNumbers.length * ticketPrice;
-                totalCostDiv.textContent = `Costo Total: $${totalCost} pesos`;
-            } else {
-                apartButton.style.display = 'none';
-                totalCostDiv.textContent = '';
-            }
-        }
-
-        function showForm() {
-            document.getElementById('formModal').classList.add('show');
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('show');
-        }
-
-        async function submitForm() {
-            const customerName = document.getElementById('customerName').value;
-            const customerPhone = document.getElementById('customerPhone').value;
-            const customerState = document.getElementById('customerState').value;
-
-            if (!customerName || !customerPhone || !customerState) {
-                alert('Por favor, complete todos los campos.');
-                return;
-            }
-
-            const batch = db.batch();
-            selectedNumbers.forEach(num => {
-                const docRef = db.collection('tickets').doc(num.toString());
-                batch.set(docRef, { name: customerName, phone: customerPhone, state: customerState });
-            });
-            await batch.commit();
-
-            const message = `${customerName}\nBoleto(s) No. ${selectedNumbers.join(', ')} apartado(s)\nAl Aceptar, estarás de acuerdo con los términos y condiciones del sorteo y serás direccionado a WhatsApp, favor de mandar su pago para recibir sus boletos.`;
-            alert(message);
-
-            const whatsappUrl = `https://wa.me/526647185248?text=${encodeURIComponent(message)}%0AUNICAMENTE%20MANDE%20SU%20COMPROBANTE%20DE%20PAGO%20AQUI%20EN%20ESTA%20LINEA%20Y%20ESPERE%20SU%20TURNO%20✅️%20⚠️%20REVISE%20CUANTOS%20BOLETOS%20APARTO%20Y%20SOLO%20PAGUE%20LA%20CANTIDAD%20CORRECTA.%20*Apartado%20valido%20por%203%20horas`;
-            window.location.href = whatsappUrl;
-
-            closeModal('formModal');
-            selectedNumbers = [];
-            updateNumberList();
-            fetchBookedTickets();
-        }
-
-        function verifyTicket() {
-            const ticketNumber = parseInt(document.getElementById('verifyTicket').value);
-            const verifyResult = document.getElementById('verifyResult');
-
-            if (bookedTickets[ticketNumber]) {
-                const { name, phone, state } = bookedTickets[ticketNumber];
-                verifyResult.textContent = `Boleto No. ${String(ticketNumber).padStart(3, '0')} - Apartado por: ${name}, Tel: ${phone}, Estado: ${state}`;
-            } else {
-                verifyResult.textContent = `Boleto No. ${String(ticketNumber).padStart(3, '0')} está disponible.`;
-            }
-        }
-
-        function showAccess() {
-            document.getElementById('accessModal').classList.add('show');
-        }
-
-        function validateAccess() {
-            const password = document.getElementById('adminPassword').value;
-            if (password === "560$Iimams") {
-                closeModal('accessModal');
-                showAdminPanel();
-            } else {
-                alert('Contraseña incorrecta');
-            }
-        }
-
-        function showAdminPanel() {
-            document.getElementById('adminModal').classList.add('show');
-            updateBookedTicketsTable();
-        }
-
-        function updateBookedTicketsTable() {
-            const bookedTicketsBody = document.getElementById('bookedTicketsBody');
-            bookedTicketsBody.innerHTML = '';
-            for (const [ticketNumber, { name, phone, state }] of Object.entries(bookedTickets)) {
-                const tr = document.createElement('tr');
-                const tdNumber = document.createElement('td');
-                tdNumber.textContent = String(ticketNumber).padStart(3, '0');
-                const tdName = document.createElement('td');
-                tdName.textContent = name;
-                const tdPhone = document.createElement('td');
-                tdPhone.textContent = phone;
-                const tdState = document.createElement('td');
-                tdState.textContent = state;
-                const tdReactivate = document.createElement('td');
-                const reactivateButton = document.createElement('button');
-                reactivateButton.textContent = 'Reactivar';
-                reactivateButton.onclick = () => reactivateTicket(ticketNumber);
-                tdReactivate.appendChild(reactivateButton);
-                tr.appendChild(tdNumber);
-                tr.appendChild(tdName);
-                tr.appendChild(tdPhone);
-                tr.appendChild(tdState);
-                tr.appendChild(tdReactivate);
-                bookedTicketsBody.appendChild(tr);
-            }
-        }
-
-        function searchBookedTicket() {
-            const searchTicket = parseInt(document.getElementById('searchTicket').value);
-            const bookedTicketsBody = document.getElementById('bookedTicketsBody');
-            for (let row of bookedTicketsBody.rows) {
-                if (parseInt(row.cells[0].textContent) === searchTicket) {
-                    row.scrollIntoView();
-                    row.style.backgroundColor = "#ffcc00";
-                } else {
-                    row.style.backgroundColor = "";
-                }
-            }
-        }
-
-        async function reactivateTicket(ticketNumber) {
-            await db.collection('tickets').doc(ticketNumber.toString()).delete();
-            fetchBookedTickets();
-        }
-
-        window.onload = fetchBookedTickets;
-    </script>
+    <script src="firebase.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

@@ -1,0 +1,47 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+    text-align: center;
+}
+
+#ticketTableContainer {
+    margin-top: 20px;
+}
+
+#ticketTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#ticketTable td {
+    width: 10%;
+    height: 50px;
+    border: 1px solid #000;
+    cursor: pointer;
+}
+
+.selected {
+    background-color: #4caf50;
+    color: white;
+}
+
+.hidden {
+    display: none;
+}
+
+#customerForm {
+    margin-top: 20px;
+}
+
+#reservationForm label {
+    display: block;
+    margin: 5px 0;
+}
+
+#randomTicketButton {
+    margin: 10px 0;
+}
