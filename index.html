@@ -5,252 +5,141 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Padelucky - Máquina de la Suerte</title>
     <style>
-        /* Tus estilos existentes */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        .machine {
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+        }
+        .number-input {
+            margin: 10px 0;
+        }
+        .number-input input {
+            width: 50px;
+            padding: 10px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .number-list, .ticket-table, .verifier {
+            margin: 20px 0;
+        }
+        .number-list span {
+            display: inline-block;
+            background: #ffcc00;
+            color: #333;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            font-size: 18px;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 80%;
+            max-width: 500px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .selected {
+            background-color: #ffcc00 !important;
+        }
+        .button {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            background: #28a745;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .button:hover {
+            background: #218838;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal .form-container {
+            position: relative;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 80%;
+            max-width: 400px;
+        }
+        .modal .form-container input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .modal .form-container button {
+            width: 100%;
+            padding: 10px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .modal .form-container button:hover {
+            background: #218838;
+        }
+        .modal .close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+        .verifier input {
+            padding: 10px;
+            width: 150px;
+            margin: 10px;
+            text-align: center;
+            font-size: 16px;
+        }
     </style>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script>
-        // Inicializar Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCjpLyfV-wo9uM6K14N0q9DzsabKIIX4gA",
-            authDomain: "padelucky-e80e6.firebaseapp.com",
-            databaseURL: "https://padelucky-e80e6-default-rtdb.firebaseio.com",
-            projectId: "padelucky-e80e6",
-            storageBucket: "padelucky-e80e6.appspot.com",
-            messagingSenderId: "87499387761",
-            appId: "1:87499387761:web:e446eb19d6505e924afcd0",
-            measurementId: "G-HZRERWE8TS"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-
-        const db = firebase.database();
-
-        function saveBookedTickets(ticketNumber, customerData) {
-            db.ref('bookedTickets/' + ticketNumber).set(customerData);
-        }
-
-        function getBookedTickets(callback) {
-            db.ref('bookedTickets').once('value', snapshot => {
-                callback(snapshot.val());
-            });
-        }
-
-        function checkTicketAvailability(ticketNumber, callback) {
-            db.ref('bookedTickets/' + ticketNumber).once('value', snapshot => {
-                callback(snapshot.val());
-            });
-        }
-
-        function reactivateTicketInFirebase(ticketNumber) {
-            db.ref('bookedTickets/' + ticketNumber).remove();
-        }
-
-        let selectedNumbers = [];
-        const totalTickets = 149;
-        let bookedTickets = {};
-        const ticketPrice = 99;
-
-        function generateNumbers() {
-            const numTickets = parseInt(document.getElementById('numTickets').value);
-            selectedNumbers = [];
-            for (let i = 0; i < numTickets; i++) {
-                let randomNum;
-                do {
-                    randomNum = Math.floor(Math.random() * totalTickets) + 1;
-                } while (selectedNumbers.includes(randomNum) || bookedTickets[randomNum]);
-                selectedNumbers.push(randomNum);
-            }
-            updateNumberList();
-        }
-
-        function updateAvailableTicketsTable() {
-            const availableTicketsBody = document.getElementById('availableTicketsBody');
-            availableTicketsBody.innerHTML = '';
-            let tr;
-            for (let i = 1; i <= totalTickets; i++) {
-                if ((i - 1) % 12 === 0) {
-                    tr = document.createElement('tr');
-                }
-                const td = document.createElement('td');
-                td.textContent = String(i).padStart(3, '0');
-                if (!bookedTickets[i]) {
-                    td.onclick = () => selectTicket(i, td);
-                } else {
-                    td.style.backgroundColor = "#ddd";
-                }
-                tr.appendChild(td);
-                if (i % 12 === 0) {
-                    availableTicketsBody.appendChild(tr);
-                }
-            }
-            if (totalTickets % 12 !== 0) {
-                availableTicketsBody.appendChild(tr);
-            }
-        }
-
-        function selectTicket(ticketNumber, td) {
-            if (!selectedNumbers.includes(ticketNumber)) {
-                selectedNumbers.push(ticketNumber);
-                td.classList.add('selected');
-                td.onclick = () => deselectTicket(ticketNumber, td);
-                updateNumberList();
-            }
-        }
-
-        function deselectTicket(ticketNumber, td) {
-            selectedNumbers = selectedNumbers.filter(num => num !== ticketNumber);
-            td.classList.remove('selected');
-            td.onclick = () => selectTicket(ticketNumber, td);
-            updateNumberList();
-        }
-
-        function updateNumberList() {
-            const numberListDiv = document.getElementById('numberList');
-            numberListDiv.innerHTML = '';
-            selectedNumbers.forEach(num => {
-                const span = document.createElement('span');
-                span.textContent = String(num).padStart(3, '0');
-                numberListDiv.appendChild(span);
-            });
-
-            const apartButton = document.getElementById('apartButton');
-            const totalCostDiv = document.getElementById('totalCost');
-            if (selectedNumbers.length > 0) {
-                apartButton.style.display = 'inline-block';
-                const totalCost = selectedNumbers.length * ticketPrice;
-                totalCostDiv.textContent = `Costo Total: $${totalCost} MXN`;
-            } else {
-                apartButton.style.display = 'none';
-                totalCostDiv.textContent = '';
-            }
-        }
-
-        function showForm() {
-            document.getElementById('formModal').style.display = 'flex';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        function submitForm() {
-            const customerName = document.getElementById('customerName').value;
-            const customerPhone = document.getElementById('customerPhone').value;
-            const customerState = document.getElementById('customerState').value;
-
-            if (!customerName || !customerPhone || !customerState) {
-                alert('Por favor, complete todos los campos.');
-                return;
-            }
-
-            selectedNumbers.forEach(ticketNumber => {
-                const customerData = {
-                    name: customerName,
-                    phone: customerPhone,
-                    state: customerState
-                };
-                saveBookedTickets(ticketNumber, customerData);
-                bookedTickets[ticketNumber] = customerData;
-            });
-
-            const message = `Nombre: ${customerName}\nCelular: ${customerPhone}\nEstado: ${customerState}\nBoletos: ${selectedNumbers.join(', ')}\nCosto Total: $${selectedNumbers.length * ticketPrice} MXN\nGracias por tu confianza. Tienes 3 horas para apartar el boleto.`;
-            const whatsappUrl = `https://api.whatsapp.com/send/?phone=526647185248&text=${encodeURIComponent(message)}`;
-            window.location.href = whatsappUrl;
-
-            document.getElementById('formModal').style.display = 'none';
-            selectedNumbers = [];
-            updateNumberList();
-            updateAvailableTicketsTable();
-        }
-
-        function verifyTicket() {
-            const ticketNumber = parseInt(document.getElementById('verifyTicket').value);
-            const verifyResult = document.getElementById('verifyResult');
-
-            checkTicketAvailability(ticketNumber, data => {
-                if (data) {
-                    const {name, phone, state} = data;
-                    verifyResult.textContent = `Boleto No. ${String(ticketNumber).padStart(3, '0')} - Apartado por: ${name}, Tel: ${phone}, Estado: ${state}`;
-                } else {
-                    verifyResult.textContent = `Boleto No. ${String(ticketNumber).padStart(3, '0')} está disponible.`;
-                }
-            });
-        }
-
-        function showAccess() {
-            document.getElementById('accessModal').style.display = 'flex';
-        }
-
-        function validateAccess() {
-            const password = document.getElementById('adminPassword').value;
-            if (password === "560$Iimams") {
-                document.getElementById('accessModal').style.display = 'none';
-                showAdminPanel();
-            } else {
-                alert('Contraseña incorrecta');
-            }
-        }
-
-        function showAdminPanel() {
-            document.getElementById('adminModal').style.display = 'flex';
-            updateBookedTicketsTable();
-        }
-
-        function updateBookedTicketsTable() {
-            const bookedTicketsBody = document.getElementById('bookedTicketsBody');
-            bookedTicketsBody.innerHTML = '';
-            for (const [ticketNumber, {name, phone, state}] of Object.entries(bookedTickets)) {
-                const tr = document.createElement('tr');
-                const tdNumber = document.createElement('td');
-                tdNumber.textContent = String(ticketNumber).padStart(3, '0');
-                const tdName = document.createElement('td');
-                tdName.textContent = name;
-                const tdPhone = document.createElement('td');
-                tdPhone.textContent = phone;
-                const tdState = document.createElement('td');
-                tdState.textContent = state;
-                const tdReactivate = document.createElement('td');
-                const reactivateButton = document.createElement('button');
-                reactivateButton.textContent = 'Reactivar';
-                reactivateButton.onclick = () => reactivateTicket(ticketNumber);
-                tdReactivate.appendChild(reactivateButton);
-                tr.appendChild(tdNumber);
-                tr.appendChild(tdName);
-                tr.appendChild(tdPhone);
-                tr.appendChild(tdState);
-                tr.appendChild(tdReactivate);
-                bookedTicketsBody.appendChild(tr);
-            }
-        }
-
-        function searchBookedTicket() {
-            const searchTicket = parseInt(document.getElementById('searchTicket').value);
-            const bookedTicketsBody = document.getElementById('bookedTicketsBody');
-            for (let row of bookedTicketsBody.rows) {
-                if (parseInt(row.cells[0].textContent) === searchTicket) {
-                    row.scrollIntoView();
-                    row.style.backgroundColor = "#ffcc00";
-                } else {
-                    row.style.backgroundColor = "";
-                }
-            }
-        }
-
-        function reactivateTicket(ticketNumber) {
-            delete bookedTickets[ticketNumber];
-            reactivateTicketInFirebase(ticketNumber);
-            updateBookedTicketsTable();
-            updateAvailableTicketsTable();
-        }
-
-        window.onload = function() {
-            getBookedTickets(data => {
-                bookedTickets = data || {};
-                updateAvailableTicketsTable();
-            });
-        };
-    </script>
 </head>
 <body>
     <div class="container">
@@ -323,5 +212,206 @@
             </table>
         </div>
     </div>
+
+    <script>
+        let selectedNumbers = [];
+        const totalTickets = 149;
+        const bookedTickets = {};
+        const ticketPrice = 99;
+
+        function generateNumbers() {
+            const numTickets = parseInt(document.getElementById('numTickets').value);
+            selectedNumbers = [];
+            for (let i = 0; i < numTickets; i++) {
+                let randomNum;
+                do {
+                    randomNum = Math.floor(Math.random() * totalTickets) + 1;
+                } while (selectedNumbers.includes(randomNum) || bookedTickets[randomNum]);
+                selectedNumbers.push(randomNum);
+            }
+            updateNumberList();
+        }
+
+        function updateAvailableTicketsTable() {
+            const availableTicketsBody = document.getElementById('availableTicketsBody');
+            availableTicketsBody.innerHTML = '';
+            let tr;
+            for (let i = 1; i <= totalTickets; i++) {
+                if ((i - 1) % 10 === 0) {
+                    tr = document.createElement('tr');
+                }
+                const td = document.createElement('td');
+                td.textContent = String(i).padStart(3, '0');
+                if (!bookedTickets[i]) {
+                    td.onclick = () => selectTicket(i, td);
+                } else {
+                    td.style.backgroundColor = "#ddd";
+                }
+                tr.appendChild(td);
+                if (i % 10 === 0) {
+                    availableTicketsBody.appendChild(tr);
+                }
+            }
+            if (totalTickets % 10 !== 0) {
+                availableTicketsBody.appendChild(tr);
+            }
+        }
+
+        function selectTicket(ticketNumber, td) {
+            if (!selectedNumbers.includes(ticketNumber)) {
+                selectedNumbers.push(ticketNumber);
+                td.classList.add('selected');
+                td.onclick = () => deselectTicket(ticketNumber, td);
+                updateNumberList();
+            }
+        }
+
+        function deselectTicket(ticketNumber, td) {
+            selectedNumbers = selectedNumbers.filter(num => num !== ticketNumber);
+            td.classList.remove('selected');
+            td.onclick = () => selectTicket(ticketNumber, td);
+            updateNumberList();
+        }
+
+        function updateNumberList() {
+            const numberListDiv = document.getElementById('numberList');
+            numberListDiv.innerHTML = '';
+            selectedNumbers.forEach(num => {
+                const span = document.createElement('span');
+                span.textContent = String(num).padStart(3, '0');
+                numberListDiv.appendChild(span);
+            });
+
+            const apartButton = document.getElementById('apartButton');
+            const totalCostDiv = document.getElementById('totalCost');
+            if (selectedNumbers.length > 0) {
+                apartButton.style.display = 'inline-block';
+                const totalCost = selectedNumbers.length * ticketPrice;
+                totalCostDiv.textContent = `Costo Total: $${totalCost} MXN`;
+            } else {
+                apartButton.style.display = 'none';
+                totalCostDiv.textContent = '';
+            }
+        }
+
+        function showForm() {
+            document.getElementById('formModal').style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function submitForm() {
+            const customerName = document.getElementById('customerName').value;
+            const customerPhone = document.getElementById('customerPhone').value;
+            const customerState = document.getElementById('customerState').value;
+
+            if (!customerName || !customerPhone || !customerState) {
+                alert('Por favor, complete todos los campos.');
+                return;
+            }
+
+            selectedNumbers.forEach(ticketNumber => {
+                bookedTickets[ticketNumber] = {
+                    name: customerName,
+                    phone: customerPhone,
+                    state: customerState
+                };
+            });
+
+            const message = `${customerName}\nBoleto(s) No. ${selectedNumbers.join(', ')} apartado(s)\nAl Aceptar, estarás de acuerdo con los términos y condiciones del sorteo y serás direccionado a WhatsApp, favor de mandar su pago para recibir sus boletos.`;
+            alert(message);
+
+            const whatsappUrl = `https://wa.me/526647185248?text=${encodeURIComponent(message)}%0AUNICAMENTE%20MANDE%20SU%20COMPROBANTE%20DE%20PAGO%20AQUI%20EN%20ESTA%20LINEA%20Y%20ESPERE%20SU%20TURNO%20✅️%20⚠️%20REVISE%20CUANTOS%20BOLETOS%20APARTO%20Y%20SOLO%20PAGUE%20LA%20CANTIDAD%20CORRECTA.%20*Apartado%20valido%20por%203%20horas`;
+            window.location.href = whatsappUrl;
+
+            document.getElementById('formModal').style.display = 'none';
+            selectedNumbers = [];
+            updateNumberList();
+            updateAvailableTicketsTable();
+        }
+
+        function verifyTicket() {
+            const ticketNumber = parseInt(document.getElementById('verifyTicket').value);
+            const verifyResult = document.getElementById('verifyResult');
+
+            if (bookedTickets[ticketNumber]) {
+                const {name, phone, state} = bookedTickets[ticketNumber];
+                verifyResult.textContent = `Boleto No. ${String(ticketNumber).padStart(3, '0')} - Apartado por: ${name}, Tel: ${phone}, Estado: ${state}`;
+            } else {
+                verifyResult.textContent = `Boleto No. ${String(ticketNumber).padStart(3, '0')} está disponible.`;
+            }
+        }
+
+        function showAccess() {
+            document.getElementById('accessModal').style.display = 'flex';
+        }
+
+        function validateAccess() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === "560$Iimams") {
+                document.getElementById('accessModal').style.display = 'none';
+                showAdminPanel();
+            } else {
+                alert('Contraseña incorrecta');
+            }
+        }
+
+        function showAdminPanel() {
+            document.getElementById('adminModal').style.display = 'flex';
+            updateBookedTicketsTable();
+        }
+
+        function updateBookedTicketsTable() {
+            const bookedTicketsBody = document.getElementById('bookedTicketsBody');
+            bookedTicketsBody.innerHTML = '';
+            for (const [ticketNumber, {name, phone, state}] of Object.entries(bookedTickets)) {
+                const tr = document.createElement('tr');
+                const tdNumber = document.createElement('td');
+                tdNumber.textContent = String(ticketNumber).padStart(3, '0');
+                const tdName = document.createElement('td');
+                tdName.textContent = name;
+                const tdPhone = document.createElement('td');
+                tdPhone.textContent = phone;
+                const tdState = document.createElement('td');
+                tdState.textContent = state;
+                const tdReactivate = document.createElement('td');
+                const reactivateButton = document.createElement('button');
+                reactivateButton.textContent = 'Reactivar';
+                reactivateButton.onclick = () => reactivateTicket(ticketNumber);
+                tdReactivate.appendChild(reactivateButton);
+                tr.appendChild(tdNumber);
+                tr.appendChild(tdName);
+                tr.appendChild(tdPhone);
+                tr.appendChild(tdState);
+                tr.appendChild(tdReactivate);
+                bookedTicketsBody.appendChild(tr);
+            }
+        }
+
+        function searchBookedTicket() {
+            const searchTicket = parseInt(document.getElementById('searchTicket').value);
+            const bookedTicketsBody = document.getElementById('bookedTicketsBody');
+            for (let row of bookedTicketsBody.rows) {
+                if (parseInt(row.cells[0].textContent) === searchTicket) {
+                    row.scrollIntoView();
+                    row.style.backgroundColor = "#ffcc00";
+                } else {
+                    row.style.backgroundColor = "";
+                }
+            }
+        }
+
+        function reactivateTicket(ticketNumber) {
+            delete bookedTickets[ticketNumber];
+            updateBookedTicketsTable();
+            updateAvailableTicketsTable();
+        }
+
+        window.onload = function() {
+            updateAvailableTicketsTable();
+        };
+    </script>
 </body>
 </html>
