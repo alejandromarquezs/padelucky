@@ -11,14 +11,11 @@ for (let i = 0; i < 10; i++) {
         const cell = row.insertCell();
         const ticketNumber = (i * 10 + j + 1).toString().padStart(3, '0');
         cell.textContent = ticketNumber;
-        cell.id = 'ticket-' + ticketNumber;
-        cell.addEventListener('click', () => selectTicket(cell));
+        cell.addEventListener('click', () => selectTicket(cell, ticketNumber));
     }
 }
 
-// Seleccionar boleto
-function selectTicket(cell) {
-    const ticketNumber = cell.textContent;
+function selectTicket(cell, ticketNumber) {
     if (cell.classList.contains('selected')) {
         cell.classList.remove('selected');
         selectedTickets = selectedTickets.filter(ticket => ticket !== ticketNumber);
@@ -26,47 +23,55 @@ function selectTicket(cell) {
         cell.classList.add('selected');
         selectedTickets.push(ticketNumber);
     }
-    updateReserveButton();
+    updateSelectedTickets();
 }
 
-// Actualizar botón de reservar
-function updateReserveButton() {
-    const reserveButton = document.getElementById('reserveButton');
-    if (selectedTickets.length > 0) {
-        reserveButton.disabled = false;
-    } else {
-        reserveButton.disabled = true;
-    }
+function updateSelectedTickets() {
+    const list = document.getElementById('selectedTicketsList');
+    list.innerHTML = '';
+    selectedTickets.forEach(ticket => {
+        const listItem = document.createElement('li');
+        listItem.textContent = ticket;
+        list.appendChild(listItem);
+    });
+    const totalPrice = selectedTickets.length * ticketPrice;
+    document.getElementById('totalPrice').textContent = totalPrice;
+    document.getElementById('reserveButton').disabled = selectedTickets.length === 0;
 }
 
-// Máquina de la suerte
 document.getElementById('randomTicketButton').addEventListener('click', () => {
-    const ticketQuantity = parseInt(document.getElementById('ticketQuantity').value);
-    if (ticketQuantity > 0 && ticketQuantity <= totalTickets) {
-        const availableTickets = Array.from(document.querySelectorAll('#ticketTable td:not(.selected)'));
-        for (let i = 0; i < ticketQuantity; i++) {
-            const randomIndex = Math.floor(Math.random() * availableTickets.length);
-            const selectedTicket = availableTickets.splice(randomIndex, 1)[0];
-            selectTicket(selectedTicket);
-        }
+    const quantity = parseInt(document.getElementById('ticketQuantity').value);
+    if (isNaN(quantity) || quantity < 1 || quantity > totalTickets) {
+        alert('Por favor, ingrese una cantidad válida de boletos.');
+        return;
     }
+    const availableTickets = Array.from(document.querySelectorAll('#ticketTable td:not(.selected)'));
+    if (availableTickets.length < quantity) {
+        alert('No hay suficientes boletos disponibles.');
+        return;
+    }
+    for (let i = 0; i < quantity; i++) {
+        const randomIndex = Math.floor(Math.random() * availableTickets.length);
+        const randomCell = availableTickets.splice(randomIndex, 1)[0];
+        const ticketNumber = randomCell.textContent;
+        randomCell.classList.add('selected');
+        selectedTickets.push(ticketNumber);
+    }
+    updateSelectedTickets();
 });
 
-// Evento al reservar boletos
 document.getElementById('reserveButton').addEventListener('click', () => {
-    document.getElementById('customerForm').classList.remove('hidden');
+    openModal('customerForm');
 });
 
-// Enviar formulario de reserva
 document.getElementById('reservationForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const name = document.getElementById('name').value;
     const phone = document.getElementById('phone').value;
     const state = document.getElementById('state').value;
     const totalCost = selectedTickets.length * ticketPrice;
-
-    const message = `Nombre: ${name}\nCelular: ${phone}\nEstado: ${state}\nBoletos: ${selectedTickets.join(', ')}\nTotal a pagar: $${totalCost}\nGracias por tu confianza, tienes 3 horas para apartar el boleto.`;
-    const whatsappURL = `https://wa.me/526647185248?text=${encodeURIComponent(message)}`;
+    const message = `Datos del Cliente:\nNombre: ${name}\nCelular: ${phone}\nEstado: ${state}\nBoletos: ${selectedTickets.join(', ')}\nTotal a pagar: $${totalCost}\nGracias por tu confianza, tienes 3 horas para apartar el boleto.`;
+    const whatsappURL = `https://api.whatsapp.com/send/?phone=526647185248&text=${encodeURIComponent(message)}`;
 
     // Guardar en Firebase
     selectedTickets.forEach(ticket => {
@@ -82,32 +87,51 @@ document.getElementById('reservationForm').addEventListener('submit', (e) => {
     window.location.href = whatsappURL;
 });
 
-// Botón de verificar
 document.getElementById('verifyButton').addEventListener('click', () => {
-    const ticketNumber = prompt('Ingrese el número de boleto a verificar:').padStart(3, '0');
+    openModal('verifyForm');
+});
+
+document.getElementById('verifyTicketForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const ticketNumber = document.getElementById('verifyTicketNumber').value.padStart(3, '0');
     firebase.database().ref('tickets/' + ticketNumber).get().then(snapshot => {
+        const result = document.getElementById('verifyResult');
         if (snapshot.exists()) {
             const data = snapshot.val();
-            alert(`Boleto ${ticketNumber} está reservado por:\nNombre: ${data.name}\nCelular: ${data.phone}\nEstado: ${data.state}`);
+            result.textContent = `Boleto ${ticketNumber} está reservado por:\nNombre: ${data.name}\nCelular: ${data.phone}\nEstado: ${data.state}`;
         } else {
-            alert(`Boleto ${ticketNumber} está disponible.`);
+            result.textContent = `Boleto ${ticketNumber} está disponible.`;
         }
     });
 });
 
-// Botón de acceso
 document.getElementById('accessButton').addEventListener('click', () => {
-    document.getElementById('accessForm').classList.remove('hidden');
+    openModal('accessForm');
 });
 
-// Acceso al CRM
 document.getElementById('accessVerificationForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const password = document.getElementById('accessPassword').value;
     if (password === '560$Iimams') {
-        document.getElementById('accessForm').classList.add('hidden');
-        document.getElementById('crmPanel').classList.remove('hidden');
+        closeModal('accessForm');
+        openModal('crmPanel');
     } else {
         alert('Contraseña incorrecta.');
     }
 });
+
+document.getElementById('reactivateButton').addEventListener('click', () => {
+    const ticketNumber = document.getElementById('reactivateTicketNumber').value.padStart(3, '0');
+    firebase.database().ref('tickets/' + ticketNumber).remove().then(() => {
+        document.querySelector(`#ticketTable td:contains(${ticketNumber})`).classList.remove('selected');
+        alert(`Boleto ${ticketNumber} ha sido reactivado y está disponible nuevamente.`);
+    });
+});
+
+function openModal(modalId) {
+    document.getElementById(modalId).classList.remove('hidden');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.add('hidden');
+}
