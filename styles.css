@@ -33,26 +33,27 @@ body {
     display: none;
 }
 
-#customerForm {
+#customerForm, #accessForm {
     margin-top: 20px;
 }
 
-#reservationForm label {
+#reservationForm, #accessVerificationForm label {
     display: block;
     margin: 5px 0;
 }
 
-#crmAccess {
-    margin-top: 20px;
-}
-
-#crmPanel {
-    margin-top: 20px;
-    border: 1px solid #000;
-    padding: 20px;
+#randomTicketButton {
+    margin: 10px 0;
 }
 
 .closeButton {
     float: right;
+    background-color: red;
+    color: white;
+    border: none;
     cursor: pointer;
+}
+
+.closeButton:hover {
+    background-color: darkred;
 }

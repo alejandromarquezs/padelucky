@@ -39,7 +39,6 @@
                     <input type="tel" id="phone" required>
                     <label for="state">Estado:</label>
                     <select id="state" required>
-                        <option value="" disabled selected>Selecciona tu estado</option>
                         <option value="Aguascalientes">Aguascalientes</option>
                         <option value="Baja California">Baja California</option>
                         <option value="Baja California Sur">Baja California Sur</option>
@@ -76,20 +75,26 @@
                     <button type="submit">Enviar</button>
                 </form>
             </div>
+            <div>
+                <button id="verifyButton">Verificar</button>
+                <button id="accessButton">Acceso</button>
+            </div>
+            <div id="accessForm" class="hidden">
+                <h2>Acceso Colaboradores</h2>
+                <form id="accessVerificationForm">
+                    <label for="accessPassword">Contraseña:</label>
+                    <input type="password" id="accessPassword" required>
+                    <button type="submit">Ingresar</button>
+                </form>
+            </div>
+            <div id="crmPanel" class="hidden">
+                <button class="closeButton" onclick="document.getElementById('crmPanel').classList.add('hidden')">x</button>
+                <h2>CRM Colaboradores</h2>
+                <!-- CRM content goes here -->
+            </div>
         </main>
     </div>
-    <div id="crmAccess" class="hidden">
-        <h2>Acceso CRM</h2>
-        <input type="password" id="crmPassword" placeholder="Contraseña">
-        <button id="crmLoginButton">Acceder</button>
-        <div id="crmPanel" class="hidden">
-            <button class="closeButton">x</button>
-            <h2>Panel CRM</h2>
-            <div id="crmContent">
-                <!-- Contenido del CRM -->
-            </div>
-        </div>
-    </div>
+    <script src="firebase.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

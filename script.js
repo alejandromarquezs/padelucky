@@ -1,19 +1,4 @@
-// Firebase configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyCjpLyfV-wo9uM6K14N0q9DzsabKIIX4gA",
-    authDomain: "padelucky-e80e6.firebaseapp.com",
-    projectId: "padelucky-e80e6",
-    storageBucket: "padelucky-e80e6.appspot.com",
-    messagingSenderId: "87499387761",
-    appId: "1:87499387761:web:e446eb19d6505e924afcd0",
-    measurementId: "G-HZRERWE8TS"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-// Variables globales
+// Inicializar variables globales
 let selectedTickets = [];
 const ticketPrice = 99;
 const totalTickets = 149;
@@ -24,7 +9,9 @@ for (let i = 0; i < 10; i++) {
     const row = table.insertRow();
     for (let j = 0; j < 10; j++) {
         const cell = row.insertCell();
-        cell.textContent = (i * 10 + j + 1).toString().padStart(3, '0');
+        const ticketNumber = (i * 10 + j + 1).toString().padStart(3, '0');
+        cell.textContent = ticketNumber;
+        cell.id = 'ticket-' + ticketNumber;
         cell.addEventListener('click', () => selectTicket(cell));
     }
 }
@@ -52,6 +39,19 @@ function updateReserveButton() {
     }
 }
 
+// Máquina de la suerte
+document.getElementById('randomTicketButton').addEventListener('click', () => {
+    const ticketQuantity = parseInt(document.getElementById('ticketQuantity').value);
+    if (ticketQuantity > 0 && ticketQuantity <= totalTickets) {
+        const availableTickets = Array.from(document.querySelectorAll('#ticketTable td:not(.selected)'));
+        for (let i = 0; i < ticketQuantity; i++) {
+            const randomIndex = Math.floor(Math.random() * availableTickets.length);
+            const selectedTicket = availableTickets.splice(randomIndex, 1)[0];
+            selectTicket(selectedTicket);
+        }
+    }
+});
+
 // Evento al reservar boletos
 document.getElementById('reserveButton').addEventListener('click', () => {
     document.getElementById('customerForm').classList.remove('hidden');
@@ -64,13 +64,13 @@ document.getElementById('reservationForm').addEventListener('submit', (e) => {
     const phone = document.getElementById('phone').value;
     const state = document.getElementById('state').value;
     const totalCost = selectedTickets.length * ticketPrice;
-    
+
     const message = `Nombre: ${name}\nCelular: ${phone}\nEstado: ${state}\nBoletos: ${selectedTickets.join(', ')}\nTotal a pagar: $${totalCost}\nGracias por tu confianza, tienes 3 horas para apartar el boleto.`;
     const whatsappURL = `https://wa.me/526647185248?text=${encodeURIComponent(message)}`;
 
     // Guardar en Firebase
     selectedTickets.forEach(ticket => {
-        db.ref('tickets/' + ticket).set({
+        firebase.database().ref('tickets/' + ticket).set({
             name,
             phone,
             state,
@@ -82,17 +82,32 @@ document.getElementById('reservationForm').addEventListener('submit', (e) => {
     window.location.href = whatsappURL;
 });
 
-// CRM Login
-document.getElementById('crmLoginButton').addEventListener('click', () => {
-    const password = document.getElementById('crmPassword').value;
-    if (password === '560$Iimams') {
-        document.getElementById('crmPanel').classList.remove('hidden');
-    } else {
-        alert('Contraseña incorrecta');
-    }
+// Botón de verificar
+document.getElementById('verifyButton').addEventListener('click', () => {
+    const ticketNumber = prompt('Ingrese el número de boleto a verificar:').padStart(3, '0');
+    firebase.database().ref('tickets/' + ticketNumber).get().then(snapshot => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            alert(`Boleto ${ticketNumber} está reservado por:\nNombre: ${data.name}\nCelular: ${data.phone}\nEstado: ${data.state}`);
+        } else {
+            alert(`Boleto ${ticketNumber} está disponible.`);
+        }
+    });
 });
 
-// Cerrar panel CRM
-document.querySelector('.closeButton').addEventListener('click', () => {
-    document.getElementById('crmPanel').classList.add('hidden');
+// Botón de acceso
+document.getElementById('accessButton').addEventListener('click', () => {
+    document.getElementById('accessForm').classList.remove('hidden');
+});
+
+// Acceso al CRM
+document.getElementById('accessVerificationForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const password = document.getElementById('accessPassword').value;
+    if (password === '560$Iimams') {
+        document.getElementById('accessForm').classList.add('hidden');
+        document.getElementById('crmPanel').classList.remove('hidden');
+    } else {
+        alert('Contraseña incorrecta.');
+    }
 });
