@@ -210,6 +210,7 @@
                 <tbody id="bookedTicketsBody">
                 </tbody>
             </table>
+            <button class="button" onclick="exportToCSV()">Exportar a CSV</button>
         </div>
     </div>
 
@@ -246,51 +247,42 @@
                     td.onclick = () => selectTicket(i, td);
                 } else {
                     td.style.backgroundColor = "#ddd";
+                    td.style.cursor = "not-allowed";
                 }
                 tr.appendChild(td);
                 if (i % 10 === 0) {
                     availableTicketsBody.appendChild(tr);
                 }
             }
-            if (totalTickets % 10 !== 0) {
+            if ((totalTickets % 10) !== 0) {
                 availableTicketsBody.appendChild(tr);
             }
         }
 
-        function selectTicket(ticketNumber, td) {
-            if (!selectedNumbers.includes(ticketNumber)) {
-                selectedNumbers.push(ticketNumber);
-                td.classList.add('selected');
-                td.onclick = () => deselectTicket(ticketNumber, td);
-                updateNumberList();
-            }
-        }
-
-        function deselectTicket(ticketNumber, td) {
-            selectedNumbers = selectedNumbers.filter(num => num !== ticketNumber);
-            td.classList.remove('selected');
-            td.onclick = () => selectTicket(ticketNumber, td);
-            updateNumberList();
-        }
-
         function updateNumberList() {
-            const numberListDiv = document.getElementById('numberList');
-            numberListDiv.innerHTML = '';
+            const numberList = document.getElementById('numberList');
+            numberList.innerHTML = '';
             selectedNumbers.forEach(num => {
                 const span = document.createElement('span');
                 span.textContent = String(num).padStart(3, '0');
-                numberListDiv.appendChild(span);
+                numberList.appendChild(span);
             });
-
+            const totalCost = document.getElementById('totalCost');
+            totalCost.textContent = `Total a pagar: $${selectedNumbers.length * ticketPrice}`;
             const apartButton = document.getElementById('apartButton');
-            const totalCostDiv = document.getElementById('totalCost');
-            if (selectedNumbers.length > 0) {
-                apartButton.style.display = 'inline-block';
-                const totalCost = selectedNumbers.length * ticketPrice;
-                totalCostDiv.textContent = `Costo Total: $${totalCost} MXN`;
-            } else {
-                apartButton.style.display = 'none';
-                totalCostDiv.textContent = '';
+            apartButton.style.display = selectedNumbers.length > 0 ? 'block' : 'none';
+        }
+
+        function selectTicket(ticketNumber, td) {
+            if (!bookedTickets[ticketNumber]) {
+                if (selectedNumbers.includes(ticketNumber)) {
+                    selectedNumbers = selectedNumbers.filter(num => num !== ticketNumber);
+                    td.classList.remove('selected');
+                } else {
+                    selectedNumbers.push(ticketNumber);
+                    td.classList.add('selected');
+                }
+                updateNumberList();
             }
         }
 
@@ -303,45 +295,33 @@
         }
 
         function submitForm() {
-            const customerName = document.getElementById('customerName').value;
-            const customerPhone = document.getElementById('customerPhone').value;
-            const customerState = document.getElementById('customerState').value;
-
-            if (!customerName || !customerPhone || !customerState) {
+            const name = document.getElementById('customerName').value;
+            const phone = document.getElementById('customerPhone').value;
+            const state = document.getElementById('customerState').value;
+            if (!name || !phone || !state) {
                 alert('Por favor, complete todos los campos.');
                 return;
             }
 
             selectedNumbers.forEach(ticketNumber => {
-                bookedTickets[ticketNumber] = {
-                    name: customerName,
-                    phone: customerPhone,
-                    state: customerState
-                };
+                bookedTickets[ticketNumber] = { name, phone, state };
             });
 
-            const message = `${customerName}\nBoleto(s) No. ${selectedNumbers.join(', ')} apartado(s)\nAl Aceptar, estarás de acuerdo con los términos y condiciones del sorteo y serás direccionado a WhatsApp, favor de mandar su pago para recibir sus boletos.`;
-            alert(message);
+            sendWhatsAppMessage(name, phone, state, selectedNumbers, selectedNumbers.length * ticketPrice);
 
-            const whatsappUrl = `https://wa.me/526647185248?text=${encodeURIComponent(message)}%0AUNICAMENTE%20MANDE%20SU%20COMPROBANTE%20DE%20PAGO%20AQUI%20EN%20ESTA%20LINEA%20Y%20ESPERE%20SU%20TURNO%20✅️%20⚠️%20REVISE%20CUANTOS%20BOLETOS%20APARTO%20Y%20SOLO%20PAGUE%20LA%20CANTIDAD%20CORRECTA.%20*Apartado%20valido%20por%203%20horas`;
-            window.location.href = whatsappUrl;
+            setTimeout(() => {
+                selectedNumbers.forEach(ticketNumber => {
+                    if (bookedTickets[ticketNumber]) {
+                        delete bookedTickets[ticketNumber];
+                    }
+                });
+                updateAvailableTicketsTable();
+            }, 3 * 60 * 60 * 1000); // 3 horas en milisegundos
 
-            document.getElementById('formModal').style.display = 'none';
             selectedNumbers = [];
             updateNumberList();
             updateAvailableTicketsTable();
-        }
-
-        function verifyTicket() {
-            const ticketNumber = parseInt(document.getElementById('verifyTicket').value);
-            const verifyResult = document.getElementById('verifyResult');
-
-            if (bookedTickets[ticketNumber]) {
-                const {name, phone, state} = bookedTickets[ticketNumber];
-                verifyResult.textContent = `Boleto No. ${String(ticketNumber).padStart(3, '0')} - Apartado por: ${name}, Tel: ${phone}, Estado: ${state}`;
-            } else {
-                verifyResult.textContent = `Boleto No. ${String(ticketNumber).padStart(3, '0')} está disponible.`;
-            }
+            closeModal('formModal');
         }
 
         function showAccess() {
@@ -350,11 +330,11 @@
 
         function validateAccess() {
             const password = document.getElementById('adminPassword').value;
-            if (password === "560$Iimams") {
-                document.getElementById('accessModal').style.display = 'none';
+            if (password === 'admin123') {
+                closeModal('accessModal');
                 showAdminPanel();
             } else {
-                alert('Contraseña incorrecta');
+                alert('Contraseña incorrecta.');
             }
         }
 
@@ -366,26 +346,15 @@
         function updateBookedTicketsTable() {
             const bookedTicketsBody = document.getElementById('bookedTicketsBody');
             bookedTicketsBody.innerHTML = '';
-            for (const [ticketNumber, {name, phone, state}] of Object.entries(bookedTickets)) {
+            for (const [ticketNumber, { name, phone, state }] of Object.entries(bookedTickets)) {
                 const tr = document.createElement('tr');
-                const tdNumber = document.createElement('td');
-                tdNumber.textContent = String(ticketNumber).padStart(3, '0');
-                const tdName = document.createElement('td');
-                tdName.textContent = name;
-                const tdPhone = document.createElement('td');
-                tdPhone.textContent = phone;
-                const tdState = document.createElement('td');
-                tdState.textContent = state;
-                const tdReactivate = document.createElement('td');
-                const reactivateButton = document.createElement('button');
-                reactivateButton.textContent = 'Reactivar';
-                reactivateButton.onclick = () => reactivateTicket(ticketNumber);
-                tdReactivate.appendChild(reactivateButton);
-                tr.appendChild(tdNumber);
-                tr.appendChild(tdName);
-                tr.appendChild(tdPhone);
-                tr.appendChild(tdState);
-                tr.appendChild(tdReactivate);
+                tr.innerHTML = `
+                    <td>${String(ticketNumber).padStart(3, '0')}</td>
+                    <td>${name}</td>
+                    <td>${phone}</td>
+                    <td>${state}</td>
+                    <td><button onclick="reactivateTicket(${ticketNumber})">Reactivar</button></td>
+                `;
                 bookedTicketsBody.appendChild(tr);
             }
         }
@@ -393,12 +362,19 @@
         function searchBookedTicket() {
             const searchTicket = parseInt(document.getElementById('searchTicket').value);
             const bookedTicketsBody = document.getElementById('bookedTicketsBody');
-            for (let row of bookedTicketsBody.rows) {
-                if (parseInt(row.cells[0].textContent) === searchTicket) {
-                    row.scrollIntoView();
-                    row.style.backgroundColor = "#ffcc00";
-                } else {
-                    row.style.backgroundColor = "";
+            bookedTicketsBody.innerHTML = '';
+            for (const [ticketNumber, { name, phone, state }] of Object.entries(bookedTickets)) {
+                if (ticketNumber == searchTicket) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${String(ticketNumber).padStart(3, '0')}</td>
+                        <td>${name}</td>
+                        <td>${phone}</td>
+                        <td>${state}</td>
+                        <td><button onclick="reactivateTicket(${ticketNumber})">Reactivar</button></td>
+                    `;
+                    bookedTicketsBody.appendChild(tr);
+                    break;
                 }
             }
         }
@@ -409,9 +385,50 @@
             updateAvailableTicketsTable();
         }
 
-        window.onload = function() {
+        function verifyTicket() {
+            const verifyTicket = parseInt(document.getElementById('verifyTicket').value);
+            const verifyResult = document.getElementById('verifyResult');
+            if (bookedTickets[verifyTicket]) {
+                verifyResult.textContent = 'El boleto ' + String(verifyTicket).padStart(3, '0') + ' está apartado.';
+            } else {
+                verifyResult.textContent = 'El boleto ' + String(verifyTicket).padStart(3, '0') + ' está disponible.';
+            }
+        }
+
+        function exportToCSV() {
+            let csvContent = "Número de Boleto,Nombre,Teléfono,Estado\n";
+            for (const [ticketNumber, { name, phone, state }] of Object.entries(bookedTickets)) {
+                csvContent += `${ticketNumber},${name},${phone},${state}\n`;
+            }
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "boletos_apartados.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert("¡Lo siento! Su navegador no admite la descarga directa de archivos.");
+            }
+        }
+
+        function cancelSelection() {
+            selectedNumbers = [];
+            updateNumberList();
             updateAvailableTicketsTable();
-        };
+        }
+
+        function sendWhatsAppMessage(name, phone, state, selectedNumbers, totalCost) {
+            const message = `Cliente: ${name}\nTeléfono: ${phone}\nEstado: ${state}\nBoletos Apartados: ${selectedNumbers.join(', ')}\nTotal a Pagar: $${totalCost}`;
+            const phoneNumber = "+526647185248";
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        window.onload = updateAvailableTicketsTable;
     </script>
 </body>
 </html>
