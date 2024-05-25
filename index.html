@@ -52,7 +52,7 @@
             margin: 20px auto;
             border-collapse: collapse;
             width: 80%;
-            max-width: 500px;
+            max-width: 600px;
         }
         table, th, td {
             border: 1px solid #ddd;
@@ -139,7 +139,7 @@
             text-align: center;
             font-size: 16px;
         }
-/* Estilos para la barra de desplazamiento en la tabla de boletos apartados */
+        /* Estilos para la barra de desplazamiento en la tabla de boletos apartados */
         .scrollable-table {
             max-height: 300px; /* Puedes ajustar esta altura según sea necesario */
             overflow-y: auto;
@@ -154,7 +154,7 @@
         <div class="machine">
             <div class="number-input">
                 <label for="numTickets">¿Cuántos números quieres?</label>
-                <input type="number" id="numTickets" min="1" max="149" value="1">
+                <input type="number" id="numTickets" min="1" max="999" value="1">
             </div>
             <button class="button" onclick="generateNumbers()">La Máquina de la Suerte</button>
             <div class="number-list" id="numberList"></div>
@@ -163,18 +163,20 @@
         </div>
         <div class="ticket-table">
             <h2>Boletos Disponibles</h2>
-            <table id="availableTicketsTable">
-                <tbody id="availableTicketsBody">
-                </tbody>
-            </table>
+            <div class="scrollable-table">
+                <table id="availableTicketsTable">
+                    <tbody id="availableTicketsBody">
+                    </tbody>
+                </table>
+            </div>
+            <div class="verifier">
+                <h2>Verificar Boleto</h2>
+                <input type="number" id="verifyTicket" min="1" max="999" placeholder="Número de boleto">
+                <button class="button" onclick="verifyTicket()">Verificar</button>
+                <p id="verifyResult"></p>
+            </div>
+            <button class="button" onclick="showAccess()">Acceso</button>
         </div>
-        <div class="verifier">
-            <h2>Verificar Boleto</h2>
-            <input type="number" id="verifyTicket" min="1" max="149" placeholder="Número de boleto">
-            <button class="button" onclick="verifyTicket()">Verificar</button>
-            <p id="verifyResult"></p>
-        </div>
-        <button class="button" onclick="showAccess()">Acceso</button>
     </div>
 
     <div id="formModal" class="modal">
@@ -203,29 +205,30 @@
             <h2>Boletos Apartados</h2>
             <input type="number" id="searchTicket" placeholder="Buscar Boleto">
             <button onclick="searchBookedTicket()">Buscar</button>
-	    <div class="scrollable-table">
-            <table id="bookedTicketsTable">
-                <thead>
-                    <tr>
-                        <th>Número de Boleto</th>
-                        <th>Nombre</th>
-                        <th>Teléfono</th>
-                        <th>Estado</th>
-                        <th>Reactivar</th>
-                    </tr>
-                </thead>
-                <tbody id="bookedTicketsBody">
-                </tbody>
-            </table>
-            <button class="button" onclick="exportToCSV()">Exportar a CSV</button>
+            <div class="scrollable-table">
+                <table id="bookedTicketsTable">
+                    <thead>
+                        <tr>
+                            <th>Número de Boleto</th>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                            <th>Estado</th>
+                            <th>Reactivar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookedTicketsBody">
+                    </tbody>
+                </table>
+                <button class="button" onclick="exportToCSV()">Exportar a CSV</button>
+            </div>
         </div>
     </div>
 
     <script>
         let selectedNumbers = [];
-        const totalTickets = 149;
-        const bookedTickets = {};
-        const ticketPrice = 99;
+        const totalTickets = 999;
+        let bookedTickets = JSON.parse(localStorage.getItem('bookedTickets')) || {}; // Recuperar desde localStorage
+        const ticketPrice = 25;
 
         function generateNumbers() {
             const numTickets = parseInt(document.getElementById('numTickets').value);
@@ -314,6 +317,8 @@
                 bookedTickets[ticketNumber] = { name, phone, state };
             });
 
+            localStorage.setItem('bookedTickets', JSON.stringify(bookedTickets)); // Guardar en localStorage
+
             sendWhatsAppMessage(name, phone, state, selectedNumbers, selectedNumbers.length * ticketPrice);
 
             setTimeout(() => {
@@ -322,6 +327,7 @@
                         delete bookedTickets[ticketNumber];
                     }
                 });
+                localStorage.setItem('bookedTickets', JSON.stringify(bookedTickets)); // Actualizar localStorage
                 updateAvailableTicketsTable();
             }, 3 * 60 * 60 * 1000); // 3 horas en milisegundos
 
@@ -388,6 +394,7 @@
 
         function reactivateTicket(ticketNumber) {
             delete bookedTickets[ticketNumber];
+            localStorage.setItem('bookedTickets', JSON.stringify(bookedTickets)); // Actualizar localStorage
             updateBookedTicketsTable();
             updateAvailableTicketsTable();
         }
